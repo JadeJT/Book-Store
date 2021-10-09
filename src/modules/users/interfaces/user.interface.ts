@@ -5,4 +5,5 @@ export interface User {
     name: string;
     surname: string;
     date_of_birth: string;
+    books?: number[];
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, UseGuards, Request, Put, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, UseGuards, Request, Put, HttpException, HttpStatus, HttpCode } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../authen/guards/jwt-auth.guard';
@@ -9,14 +9,22 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post('users')
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @HttpCode(200)
+  async create(@Body() createUserDto: CreateUserDto) {
+    const result = await this.usersService.create(createUserDto);
+    if (!result) {
+      throw new HttpException({
+        status: HttpStatus.BAD_REQUEST,
+        error: 'This username has already been registered',
+      }, HttpStatus.BAD_REQUEST);
+    }
+    return
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('users')
   async findByID(@Request() req) {
-    const result = await this.usersService.findByID(req.id);
+    const result = await this.usersService.findByID(req.user.id);
     if (result) {
       const { id, username, password, ...info } = result
       return info
@@ -51,5 +59,18 @@ export class UsersController {
       }, HttpStatus.UNPROCESSABLE_ENTITY);
     }
     return
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('users/orders')
+  async order(@Request() req, @Body('orders') orders) {
+    const result = await this.usersService.order(req.user.id, orders);
+    if (!result) {
+      throw new HttpException({
+        status: HttpStatus.BAD_REQUEST,
+        error: 'Order Fail',
+      }, HttpStatus.BAD_REQUEST);
+    }
+    return result
   }
 }

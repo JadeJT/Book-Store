@@ -5,19 +5,23 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { encrypt } from '../../utils/helper'
-import { User } from './dto/user';
+import { User } from './interfaces/user.interface';
+import { OrderEntity } from './entities/order.entity';
+import { BooksService } from '../books/books.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    @InjectRepository(OrderEntity)
+    private ordersRepository: Repository<OrderEntity>,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User | undefined> {
     const checkUser = await this.usersRepository.findOne({ where: { username: createUserDto.username } });
     if (checkUser) {
-      return checkUser
+      return undefined
     }
     const hashPassword = await encrypt(createUserDto.password)
     const user: CreateUserDto = { ...createUserDto, password: hashPassword }
@@ -29,7 +33,14 @@ export class UsersService {
   }
 
   async findByID(id: number): Promise<User | undefined> {
-    return await this.usersRepository.findOne(id);
+    let profile = await this.usersRepository.findOne({ where: { id } });
+    let orders = await this.ordersRepository.find({ where: { orderer_id: id } })
+    if (orders.length > 0) {
+      const books = orders.map((order) => order.book_id)
+      const result = { ...profile, books }
+      return result
+    }
+    return profile
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -41,4 +52,17 @@ export class UsersService {
     const result = await this.usersRepository.delete(id);
     return result.affected === 1
   }
+
+  async order(ordererId: number, ordersId: number[]) {
+    const available = await new BooksService().checkAvaliable(ordersId)
+    if (available.length === ordersId.length) {
+      const price: number = available.reduce((total, book) => total += book.price, 0)
+      for (let i = 0; i < available.length; i++) {
+        await this.ordersRepository.save({ orderer_id: ordererId, book_id: available[i].id })
+      }
+      return { price }
+    }
+    return false
+  }
+
 }

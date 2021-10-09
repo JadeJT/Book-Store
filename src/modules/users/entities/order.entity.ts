@@ -6,8 +6,8 @@ export class OrderEntity {
     id: number;
 
     @Column({ type: 'int', nullable: false })
-    orderer: string;
+    orderer_id: number;
 
     @Column({ type: 'int', nullable: false })
-    book_id: string;
+    book_id: number;
 }

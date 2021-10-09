@@ -1,0 +1,8 @@
+export interface Book {
+    id: number;
+    name: string;
+    author: string;
+    price: number;
+    is_recommended?: boolean;
+
+}
