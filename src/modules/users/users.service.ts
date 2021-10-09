@@ -24,19 +24,21 @@ export class UsersService {
     return await this.usersRepository.save(user);
   }
 
-  async findOne(username: string): Promise<User | undefined> {
+  async findByUsername(username: string): Promise<User | undefined> {
     return this.usersRepository.findOne({ where: { username: username } });
   }
 
-  async getInfo(id: number): Promise<User | undefined> {
+  async findByID(id: number): Promise<User | undefined> {
     return await this.usersRepository.findOne(id);
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    return await this.usersRepository.update(id, updateUserDto);
+    const result = await this.usersRepository.update(id, updateUserDto);
+    return result.affected === 1
   }
 
   async remove(id: number) {
-    return await this.usersRepository.delete(id);
+    const result = await this.usersRepository.delete(id);
+    return result.affected === 1
   }
 }

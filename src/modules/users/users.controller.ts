@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, UseGuards, Request, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, UseGuards, Request, Put, HttpException, HttpStatus } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../authen/guards/jwt-auth.guard';
@@ -15,20 +15,41 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('users')
-  async getInfo(@Request() req) {
-    const { id, username, password, ...info } = await this.usersService.getInfo(req.id);
-    return info
+  async findByID(@Request() req) {
+    const result = await this.usersService.findByID(req.id);
+    if (result) {
+      const { id, username, password, ...info } = result
+      return info
+    }
+    throw new HttpException({
+      status: HttpStatus.NOT_FOUND,
+      error: 'User Not Found',
+    }, HttpStatus.NOT_FOUND);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put('users')
-  update(@Request() req, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+req.user.id, updateUserDto);
+  async update(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+    const result = await this.usersService.update(+req.user.id, updateUserDto);
+    if (!result) {
+      throw new HttpException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'Update Fail',
+      }, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    return
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('users')
-  remove(@Request() req) {
-    return this.usersService.remove(req.user.id);
+  async remove(@Request() req) {
+    const result = await this.usersService.remove(req.user.id);
+    if (!result) {
+      throw new HttpException({
+        status: HttpStatus.UNPROCESSABLE_ENTITY,
+        error: 'Delete Fail',
+      }, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    return
   }
 }
