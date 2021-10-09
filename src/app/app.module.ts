@@ -5,6 +5,7 @@ import { UsersModule } from '../modules/users/users.module'
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/modules/authen/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { BooksModule } from 'src/modules/books/books.module';
 
 @Global()
 @Module({
@@ -22,7 +23,7 @@ import { ConfigModule } from '@nestjs/config';
       database: process.env.DB_NAME,
       entities: ['dist/**/*.entity{.ts,.js}'],
       synchronize: true,
-    }), UsersModule, AuthModule],
+    }), UsersModule, AuthModule, BooksModule],
   controllers: [AppController],
   providers: [AppService],
 })
